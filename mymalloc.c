@@ -21,7 +21,7 @@ static void split(struct block *fitting_slot, size_t size)
 	return;
 
     // Points to the remaining free data block head
-    new = (struct block*) ((void*)fitting_slot + size + sizeof(struct block));
+    new = (struct block*) ((char*)fitting_slot + size + sizeof(struct block));
 
     new->size = (fitting_slot->size) - size - sizeof(struct block);
     new->free = 1;
@@ -83,7 +83,7 @@ mymalloc_handler mymalloc_init_array(void *pmemory, size_t size)
 
     head->size = size; 
     head->free = 0;
-    head->next = pmemory + sizeof(struct block);
+    head->next = (void*)((char*)pmemory + sizeof(struct block));
 
     first_block_free = (struct block*)head->next;
 
@@ -100,7 +100,7 @@ mymalloc_handler mymalloc_init_array(void *pmemory, size_t size)
  */
 void * mymalloc(mymalloc_handler mem_space, size_t size){
 
-    struct block *curr, *prev;
+    struct block *curr;
     void *result = NULL;
 
     // points the first block
@@ -109,7 +109,6 @@ void * mymalloc(mymalloc_handler mem_space, size_t size){
     // find the first free block that fits
     while( ((curr->size < size) || (curr->free == 0 )) && (curr->next != NULL) )
     {
-	prev = curr;
 	curr = curr->next;
     }
 
@@ -136,10 +135,10 @@ void myfree (mymalloc_handler mem_space, void *ptr)
 {
     struct block* curr;
 
-    if( (ptr < ((void*)mem_space->next)) || ((((void*)mem_space)+mem_space->size) < ptr) )
+    if( (ptr < ((void*)mem_space->next)) || ((void*)((char*)mem_space+mem_space->size) < ptr) )
 	return; // Wrong ptr
 
-    curr = (ptr - sizeof(struct block));
+    curr = (void*)((char*)ptr - sizeof(struct block));
     curr->free=1;
 
     merge(mem_space);
