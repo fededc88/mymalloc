@@ -1,12 +1,17 @@
 #include "mymalloc.h"
 
+/**
+ * Metadata block structure
+ */
 struct block {
     size_t size;
     int free;
     struct block *next; 
 };
 
-/*Making way for a new block allocation by splitting a free block -- (Assume first fit algorithm)*/
+/**
+ * split() - Allocates a new block by splitting a free one - assumes first fit
+ */
 static void split(struct block *fitting_slot, size_t size)
 {
     struct block *new;
@@ -15,18 +20,27 @@ static void split(struct block *fitting_slot, size_t size)
     if( fitting_slot->size <= (size + sizeof(struct block) ))
 	return;
 
+    // Points to the remaining free data block head
     new = (struct block*) ((void*)fitting_slot + size + sizeof(struct block));
 
     new->size = (fitting_slot->size) - size - sizeof(struct block);
     new->free = 1;
-    new->next = NULL;;
+    if( fitting_slot->next == NULL)
+	new->next = NULL;
+    else
+	new->next = fitting_slot->next;
 
+    // Allocates the data block
     fitting_slot->size = size;
     fitting_slot->free = 0;
     fitting_slot->next = new;
 
 }
 
+/**
+ * merge() - join the consecutive free blocks by removing the metadata blocks 
+ *           lying in between.
+ */
 static void merge(mymalloc_handler mem_space)
 {
     struct block *curr, *prev;
@@ -58,12 +72,12 @@ static void merge(mymalloc_handler mem_space)
     }
 }
 
-    // Makes any array a dinamyc allocation space. This lets you statically declare
-    // an space of memory and the init as a dynamic zone, or use a RAM space
-    // synamicalle. 
-    mymalloc_handler mymalloc_init_array(void *pmemory, size_t size)
-    {
-	struct block *head, *first_block_free;
+/**
+ * mymalloc_init_array() - Initialize a statically allocated array to use it as dynamic.
+ */
+mymalloc_handler mymalloc_init_array(void *pmemory, size_t size)
+{
+    struct block *head, *first_block_free;
 
     head = (struct block*) pmemory;
 
@@ -80,11 +94,13 @@ static void merge(mymalloc_handler mem_space)
     return head;
 }
 
-
+/**
+ * mymalloc() - Allocates spaces for an object on the statically reserved
+ *              memiory space
+ */
 void * mymalloc(mymalloc_handler mem_space, size_t size){
 
     struct block *curr, *prev;
-
     void *result = NULL;
 
     // points the first block
@@ -110,15 +126,17 @@ void * mymalloc(mymalloc_handler mem_space, size_t size){
 	}
 
     }
-
     return result;
 }
 
+/**
+ * myfree() - Frees spaces for an object on the statically reserved mem space
+ */
 void myfree (mymalloc_handler mem_space, void *ptr)
 {
     struct block* curr;
 
-    if( (ptr < ((void*)mem_space->next)) && ((((void*)mem_space)+mem_space->size) < ptr) )
+    if( (ptr < ((void*)mem_space->next)) || ((((void*)mem_space)+mem_space->size) < ptr) )
 	return; // Wrong ptr
 
     curr = (ptr - sizeof(struct block));
