@@ -9,12 +9,13 @@ struct block {
 /*Making way for a new block allocation by splitting a free block -- (Assume first fit algorithm)*/
 static void split(struct block *fitting_slot, size_t size)
 {
+    struct block *new;
 
     //checks there is enough space to make a split
     if( fitting_slot->size <= (size + sizeof(struct block) ))
 	return;
 
-    struct block *new = (void*) ((void*)fitting_slot + size + sizeof(struct block));
+    new = (struct block*) ((void*)fitting_slot + size + sizeof(struct block));
 
     new->size = (fitting_slot->size) - size - sizeof(struct block);
     new->free = 1;
@@ -42,9 +43,12 @@ static void merge(mymalloc_handler mem_space)
 	{
 	    prev->size += (curr->size) + sizeof(struct block);
 	    if ( curr->next == NULL)
-		prev->next == NULL;
-	    else
+		prev->next = NULL;
+	    else 
+	    {
+		prev->next = curr->next;
 		curr = curr->next;
+	    }
 	}
 	else 
 	{
@@ -54,12 +58,12 @@ static void merge(mymalloc_handler mem_space)
     }
 }
 
-// Makes any array a dinamyc allocation space. This lets you statically declare
-// an space of memory and the init as a dynamic zone, or use a RAM space
-// synamicalle. 
-mymalloc_handler mymalloc_init_array(void *pmemory, size_t size)
-{
-    struct block *head, *first_block_free;
+    // Makes any array a dinamyc allocation space. This lets you statically declare
+    // an space of memory and the init as a dynamic zone, or use a RAM space
+    // synamicalle. 
+    mymalloc_handler mymalloc_init_array(void *pmemory, size_t size)
+    {
+	struct block *head, *first_block_free;
 
     head = (struct block*) pmemory;
 
@@ -101,7 +105,7 @@ void * mymalloc(mymalloc_handler mem_space, size_t size){
 	    result=(void*)(++curr);
 	}
 	else if ((curr->size) == size){
-	    curr->free=0;
+	    curr->free = 0;
 	    result=(void*)(++curr);
 	}
 
