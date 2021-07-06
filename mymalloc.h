@@ -1,3 +1,7 @@
+
+#ifndef __MYMALLOC_H__
+#define __MYMALLOC_H__
+
 #include<stdio.h>
 #include<stddef.h>
 
@@ -51,3 +55,9 @@ void * mymalloc(mymalloc_handler mem_space, size_t size);
  * deallocated by a call to myfree, the behavior is undefined. 
  */
 void myfree(mymalloc_handler mem_space, void* ptr);
+
+#endif
+
+// 
+// End of file.
+//
