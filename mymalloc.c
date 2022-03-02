@@ -1,16 +1,32 @@
+/**
+ * \file: mymalloc.c
+ *
+ * \brief A general purpose dynamic memory allocation library
+ *
+ * \author: Federico D. Ceccarelli 
+ */
+
 #include "mymalloc.h"
 
 /**
- * Metadata block structure
+ * \brief Metadata block structure definition
+ *
+ * \note: Structure is defined in the .c file to encourage user to use api
+ * functions. 
  */
 struct block {
-    size_t size;
-    int free;
-    struct block *next; 
+    size_t size; /**< size of the block */
+    int free; /**< block status 1 free, 0 used */
+    struct block *next; /**< pointer to the next free block */
 };
 
 /**
- * split() - Allocates a new block by splitting a free one - assumes first fit
+ * \brief Allocates a new block by splitting a free one - assumes first fit
+ *
+ * \param [in] fitting_slot pointer to a free struct block
+ * \param [in] size the size of the space to be allocated
+ *
+ * \note static function. shouldn't be called by the user.
  */
 static void split(struct block *fitting_slot, size_t size)
 {
@@ -38,8 +54,12 @@ static void split(struct block *fitting_slot, size_t size)
 }
 
 /**
- * merge() - join the consecutive free blocks by removing the metadata blocks 
- *           lying in between.
+ * \brief join the consecutive free blocks by removing the metadata blocks 
+ *         lying in between.
+ *
+ * \param [in] mem_space handler of the type mymalloc_handler
+ *
+ * \note static function. shouldn't be called by the user.
  */
 static void merge(mymalloc_handler mem_space)
 {
@@ -72,9 +92,8 @@ static void merge(mymalloc_handler mem_space)
     }
 }
 
-/**
- * mymalloc_init_array() - Initialize a statically allocated array to use it as dynamic.
- */
+/* mymalloc_init_array() - Initialize a statically allocated memory space to be
+ *                         used dynamically. */
 mymalloc_handler mymalloc_init_array(void *pmemory, size_t size)
 {
     struct block *head, *first_block_free;
@@ -94,10 +113,8 @@ mymalloc_handler mymalloc_init_array(void *pmemory, size_t size)
     return head;
 }
 
-/**
- * mymalloc() - Allocates spaces for an object on the statically reserved
- *              memiory space
- */
+/* mymalloc() - Allocates spaces for an object on the statically reserved
+ *              memory space */
 void * mymalloc(mymalloc_handler mem_space, size_t size){
 
     struct block *curr;
@@ -128,15 +145,14 @@ void * mymalloc(mymalloc_handler mem_space, size_t size){
     return result;
 }
 
-/**
- * myfree() - Frees spaces for an object on the statically reserved mem space
- */
+/* myfree() - Frees dymanically allocated memory space for an object on the statically
+ *            reserved memory space. */
 void myfree (mymalloc_handler mem_space, void *ptr)
 {
     struct block* curr;
 
     if( (ptr < ((void*)mem_space->next)) || ((void*)((char*)mem_space+mem_space->size) < ptr) )
-	return; // Wrong ptr
+        return; // Wrong ptr
 
     curr = (void*)((char*)ptr - sizeof(struct block));
     curr->free=1;
